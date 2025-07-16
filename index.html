@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuenta Atrás</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para la fuente Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-600 to-indigo-800 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white bg-opacity-90 p-8 rounded-3xl shadow-2xl text-center max-w-xl w-full transform transition-all duration-500 hover:scale-105">
+        <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
+            Cuenta Atrás
+        </h1>
+        <p class="text-xl md:text-2xl text-gray-700 mb-8">
+            Hasta el 25 de julio de 2025 a las 15:15
+        </p>
+        <div id="countdown" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
+                <span id="days" class="text-4xl md:text-5xl font-bold">00</span>
+                <span class="text-sm md:text-base mt-1">Días</span>
+            </div>
+            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
+                <span id="hours" class="text-4xl md:text-5xl font-bold">00</span>
+                <span class="text-sm md:text-base mt-1">Horas</span>
+            </div>
+            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
+                <span id="minutes" class="text-4xl md:text-5xl font-bold">00</span>
+                <span class="text-sm md:text-base mt-1">Minutos</span>
+            </div>
+            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
+                <span id="seconds" class="text-4xl md:text-5xl font-bold">00</span>
+                <span class="text-sm md:text-base mt-1">Segundos</span>
+            </div>
+        </div>
+        <div id="message" class="text-2xl font-semibold text-green-600 hidden">
+            ¡El tiempo ha llegado!
+        </div>
+
+        <!-- Nueva sección para la función de Gemini API -->
+        <button id="generateIdeasBtn" class="mt-8 px-6 py-3 bg-pink-500 text-white font-bold rounded-xl shadow-lg hover:bg-pink-600 transition-colors duration-300 transform hover:scale-105 hidden">
+            ✨ Generar Ideas de Celebración ✨
+        </button>
+        <div id="ideasContainer" class="mt-6 text-left hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Ideas para celebrar:</h2>
+            <div id="ideasOutput" class="bg-gray-100 p-4 rounded-lg text-gray-700">
+                <!-- Las ideas generadas por la IA se mostrarán aquí -->
+                <p id="loadingIndicator" class="text-center text-gray-500 hidden">Cargando ideas...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // La fecha y hora de destino para la cuenta atrás (25 de julio de 2025, 15:15:00)
+        const targetDate = new Date("Jul 25, 2025 15:15:00").getTime();
+
+        // Obtener los elementos HTML donde se mostrará la cuenta atrás
+        const daysEl = document.getElementById("days");
+        const hoursEl = document.getElementById("hours");
+        const minutesEl = document.getElementById("minutes");
+        const secondsEl = document.getElementById("seconds");
+        const messageEl = document.getElementById("message");
+        const countdownEl = document.getElementById("countdown");
+        const generateIdeasBtn = document.getElementById("generateIdeasBtn");
+        const ideasContainer = document.getElementById("ideasContainer");
+        const ideasOutput = document.getElementById("ideasOutput");
+        const loadingIndicator = document.getElementById("loadingIndicator");
+
+        // Función para actualizar la cuenta atrás
+        function updateCountdown() {
+            // Obtener la fecha y hora actual
+            const now = new Date().getTime();
+
+            // Calcular la distancia entre la fecha de destino y la fecha actual
+            const distance = targetDate - now;
+
+            // Calcular días, horas, minutos y segundos
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // Mostrar los resultados en los elementos HTML
+            daysEl.innerHTML = String(days).padStart(2, '0');
+            hoursEl.innerHTML = String(hours).padStart(2, '0');
+            minutesEl.innerHTML = String(minutes).padStart(2, '0');
+            secondsEl.innerHTML = String(seconds).padStart(2, '0');
+
+            // Si la cuenta atrás ha terminado, mostrar un mensaje y el botón de ideas
+            if (distance < 0) {
+                clearInterval(countdownInterval); // Detener la actualización
+                countdownEl.classList.add("hidden"); // Ocultar la cuenta atrás
+                messageEl.classList.remove("hidden"); // Mostrar el mensaje
+                generateIdeasBtn.classList.remove("hidden"); // Mostrar el botón de generar ideas
+                daysEl.innerHTML = "00";
+                hoursEl.innerHTML = "00";
+                minutesEl.innerHTML = "00";
+                secondsEl.innerHTML = "00";
+            }
+        }
+
+        // Función para llamar a la API de Gemini y generar ideas
+        async function generateCelebrationIdeas() {
+            loadingIndicator.classList.remove("hidden"); // Mostrar indicador de carga
+            ideasOutput.innerHTML = ''; // Limpiar ideas anteriores
+            ideasContainer.classList.remove("hidden"); // Asegurarse de que el contenedor de ideas sea visible
+
+            const prompt = "Genera 3 ideas creativas y divertidas para celebrar un evento que acaba de comenzar. Las ideas deben ser concisas y entusiastas, presentadas como una lista numerada.";
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // La API key será proporcionada por el entorno de Canvas
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    ideasOutput.innerHTML = text.replace(/\n/g, '<br>'); // Mostrar el texto con saltos de línea
+                } else {
+                    ideasOutput.innerHTML = "No se pudieron generar ideas. Inténtalo de nuevo.";
+                }
+            } catch (error) {
+                console.error("Error al llamar a la API de Gemini:", error);
+                ideasOutput.innerHTML = "Error al conectar con el servicio de ideas.";
+            } finally {
+                loadingIndicator.classList.add("hidden"); // Ocultar indicador de carga
+            }
+        }
+
+        // Event listener para el botón de generar ideas
+        generateIdeasBtn.addEventListener("click", generateCelebrationIdeas);
+
+        // Actualizar la cuenta atrás cada segundo
+        const countdownInterval = setInterval(updateCountdown, 1000);
+
+        // Llamar a la función una vez al cargar la página para evitar un retraso inicial
+        updateCountdown();
+    </script>
+</body>
+</html>
