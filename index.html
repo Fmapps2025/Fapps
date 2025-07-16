@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuenta Atrás</title>
+    <title>Cuenta Atrás de Horas Laborables</title>
     <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,10 +17,10 @@
 <body class="bg-gradient-to-br from-purple-600 to-indigo-800 min-h-screen flex items-center justify-center p-4">
     <div class="bg-white bg-opacity-90 p-8 rounded-3xl shadow-2xl text-center max-w-xl w-full transform transition-all duration-500 hover:scale-105">
         <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
-            Cuenta Atrás
+            Cuenta Atrás de Vacaciones
         </h1>
         <p class="text-xl md:text-2xl text-gray-700 mb-8">
-            Hasta el 25 de julio de 2025 a las 15:15
+            Horas laborables restantes hasta el 25 de julio de 2025 a las 15:15
         </p>
         <div id="countdown" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
@@ -41,7 +41,7 @@
             </div>
         </div>
         <div id="message" class="text-2xl font-semibold text-green-600 hidden">
-            ¡El tiempo ha llegado!
+            ¡Enhorabuena, estás de vacaciones!
         </div>
 
         <!-- Nueva sección para la función de Gemini API -->
@@ -73,46 +73,124 @@
         const ideasOutput = document.getElementById("ideasOutput");
         const loadingIndicator = document.getElementById("loadingIndicator");
 
-        // Función para actualizar la cuenta atrás
+        // Define los turnos de trabajo para cada día de la semana
+        // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+        const workingShifts = {
+            1: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Lunes
+            2: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Martes
+            3: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Miércoles
+            4: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Jueves
+            5: [{ start: '06:45', end: '15:15' }] // Viernes
+            // Sábados y Domingos no están definidos, por lo tanto, no se consideran días laborables
+        };
+
+        /**
+         * Calcula el total de segundos laborables entre dos fechas y horas.
+         * @param {Date} startDateTime - La fecha y hora de inicio.
+         * @param {Date} endDateTime - La fecha y hora de fin.
+         * @returns {number} El total de segundos laborables.
+         */
+        function calculateTotalWorkingSeconds(startDateTime, endDateTime) {
+            let totalSeconds = 0;
+
+            // Clonar las fechas para evitar modificar las originales
+            let currentDay = new Date(startDateTime);
+            // Normalizar a la medianoche del día actual para la iteración
+            currentDay.setHours(0, 0, 0, 0);
+
+            const endTarget = new Date(endDateTime); // La hora de finalización exacta
+
+            // Iterar día a día desde la fecha de inicio hasta la fecha de fin
+            while (currentDay.getTime() <= endTarget.getTime()) {
+                const dayOfWeek = currentDay.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+
+                // Si es un día laborable según los turnos definidos
+                if (workingShifts[dayOfWeek]) {
+                    workingShifts[dayOfWeek].forEach(shift => {
+                        // Crear objetos Date para el inicio y fin del turno en el día actual
+                        let shiftStartToday = new Date(currentDay);
+                        shiftStartToday.setHours(parseInt(shift.start.split(':')[0]), parseInt(shift.start.split(':')[1]), 0, 0);
+
+                        let shiftEndToday = new Date(currentDay);
+                        shiftEndToday.setHours(parseInt(shift.end.split(':')[0]), parseInt(shift.end.split(':')[1]), 0, 0);
+
+                        // Calcular la intersección entre el rango de tiempo general
+                        // (startDateTime, endDateTime) y el turno de trabajo (shiftStartToday, shiftEndToday)
+                        const effectiveStart = Math.max(shiftStartToday.getTime(), startDateTime.getTime());
+                        const effectiveEnd = Math.min(shiftEndToday.getTime(), endTarget.getTime());
+
+                        // Si hay una superposición de tiempo, añadir los segundos laborables
+                        if (effectiveEnd > effectiveStart) {
+                            totalSeconds += (effectiveEnd - effectiveStart) / 1000;
+                        }
+                    });
+                }
+
+                // Mover al siguiente día
+                currentDay.setDate(currentDay.getDate() + 1);
+                // Asegurarse de que sea el inicio del siguiente día
+                currentDay.setHours(0, 0, 0, 0);
+            }
+
+            // Asegurarse de que el total de segundos no sea negativo y redondear hacia abajo
+            return Math.max(0, Math.floor(totalSeconds));
+        }
+
+        /**
+         * Actualiza la visualización de la cuenta atrás.
+         */
         function updateCountdown() {
-            // Obtener la fecha y hora actual
-            const now = new Date().getTime();
+            const now = new Date(); // Obtener la fecha y hora actual
 
-            // Calcular la distancia entre la fecha de destino y la fecha actual
-            const distance = targetDate - now;
+            // Si la fecha actual es igual o posterior a la fecha de destino, la cuenta atrás ha terminado
+            if (now.getTime() >= targetDate) {
+                displayRemainingTime(0); // Mostrar 0 en todos los campos
+                clearInterval(countdownInterval); // Detener la actualización
+                countdownEl.classList.add("hidden"); // Ocultar la cuenta atrás
+                messageEl.classList.remove("hidden"); // Mostrar el mensaje final
+                generateIdeasBtn.classList.remove("hidden"); // Mostrar el botón de generar ideas
+                return; // Salir de la función
+            }
 
-            // Calcular días, horas, minutos y segundos
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            // Calcular el total de segundos laborables restantes
+            const remainingTotalWorkingSeconds = calculateTotalWorkingSeconds(now, new Date(targetDate));
 
-            // Mostrar los resultados en los elementos HTML
+            // Mostrar el tiempo restante en el HTML
+            displayRemainingTime(remainingTotalWorkingSeconds);
+        }
+
+        /**
+         * Formatea y muestra el tiempo restante en los elementos HTML.
+         * @param {number} totalSeconds - El total de segundos laborables.
+         */
+        function displayRemainingTime(totalSeconds) {
+            // Convertir el total de segundos en días, horas, minutos y segundos
+            // Aquí, "días" representa bloques de 24 horas de tiempo laborable, no días de calendario.
+            const days = Math.floor(totalSeconds / (60 * 60 * 24));
+            totalSeconds %= (60 * 60 * 24);
+
+            const hours = Math.floor(totalSeconds / (60 * 60));
+            totalSeconds %= (60 * 60);
+
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+
+            // Actualizar los elementos HTML con los valores calculados, con formato de dos dígitos
             daysEl.innerHTML = String(days).padStart(2, '0');
             hoursEl.innerHTML = String(hours).padStart(2, '0');
             minutesEl.innerHTML = String(minutes).padStart(2, '0');
             secondsEl.innerHTML = String(seconds).padStart(2, '0');
-
-            // Si la cuenta atrás ha terminado, mostrar un mensaje y el botón de ideas
-            if (distance < 0) {
-                clearInterval(countdownInterval); // Detener la actualización
-                countdownEl.classList.add("hidden"); // Ocultar la cuenta atrás
-                messageEl.classList.remove("hidden"); // Mostrar el mensaje
-                generateIdeasBtn.classList.remove("hidden"); // Mostrar el botón de generar ideas
-                daysEl.innerHTML = "00";
-                hoursEl.innerHTML = "00";
-                minutesEl.innerHTML = "00";
-                secondsEl.innerHTML = "00";
-            }
         }
 
-        // Función para llamar a la API de Gemini y generar ideas
+        /**
+         * Llama a la API de Gemini para generar ideas de celebración.
+         */
         async function generateCelebrationIdeas() {
             loadingIndicator.classList.remove("hidden"); // Mostrar indicador de carga
             ideasOutput.innerHTML = ''; // Limpiar ideas anteriores
             ideasContainer.classList.remove("hidden"); // Asegurarse de que el contenedor de ideas sea visible
 
-            const prompt = "Genera 3 ideas creativas y divertidas para celebrar un evento que acaba de comenzar. Las ideas deben ser concisas y entusiastas, presentadas como una lista numerada.";
+            const prompt = "Genera 3 ideas creativas y divertidas para celebrar unas vacaciones que acaban de comenzar. Las ideas deben ser concisas y entusiastas, presentadas como una lista numerada.";
             let chatHistory = [];
             chatHistory.push({ role: "user", parts: [{ text: prompt }] });
 
