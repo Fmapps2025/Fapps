@@ -23,28 +23,32 @@
             Horas laborables restantes hasta el 25 de julio de 2025 a las 15:15
         </p>
         <div id="countdown" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
-                <span id="days" class="text-4xl md:text-5xl font-bold">00</span>
-                <span class="text-sm md:text-base mt-1">Días</span>
-            </div>
+            <!-- Se muestra el total de horas restantes -->
             <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
                 <span id="hours" class="text-4xl md:text-5xl font-bold">00</span>
                 <span class="text-sm md:text-base mt-1">Horas</span>
             </div>
+            <!-- Se muestran los minutos restantes -->
             <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
                 <span id="minutes" class="text-4xl md:text-5xl font-bold">00</span>
                 <span class="text-sm md:text-base mt-1">Minutos</span>
             </div>
+            <!-- Se muestran los segundos restantes -->
             <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
                 <span id="seconds" class="text-4xl md:text-5xl font-bold">00</span>
                 <span class="text-sm md:text-base mt-1">Segundos</span>
+            </div>
+            <!-- Se muestran las décimas de segundo restantes -->
+            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
+                <span id="tenths" class="text-4xl md:text-5xl font-bold">0</span>
+                <span class="text-sm md:text-base mt-1">Décimas</span>
             </div>
         </div>
         <div id="message" class="text-2xl font-semibold text-green-600 hidden">
             ¡Enhorabuena, estás de vacaciones!
         </div>
 
-        <!-- Nueva sección para la función de Gemini API -->
+        <!-- Sección para la función de Gemini API -->
         <button id="generateIdeasBtn" class="mt-8 px-6 py-3 bg-pink-500 text-white font-bold rounded-xl shadow-lg hover:bg-pink-600 transition-colors duration-300 transform hover:scale-105 hidden">
             ✨ Generar Ideas de Celebración ✨
         </button>
@@ -62,10 +66,10 @@
         const targetDate = new Date("Jul 25, 2025 15:15:00").getTime();
 
         // Obtener los elementos HTML donde se mostrará la cuenta atrás
-        const daysEl = document.getElementById("days");
         const hoursEl = document.getElementById("hours");
         const minutesEl = document.getElementById("minutes");
         const secondsEl = document.getElementById("seconds");
+        const tenthsEl = document.getElementById("tenths"); // Nuevo elemento para décimas de segundo
         const messageEl = document.getElementById("message");
         const countdownEl = document.getElementById("countdown");
         const generateIdeasBtn = document.getElementById("generateIdeasBtn");
@@ -154,32 +158,35 @@
 
             // Calcular el total de segundos laborables restantes
             const remainingTotalWorkingSeconds = calculateTotalWorkingSeconds(now, new Date(targetDate));
+            // Convertir a milisegundos para calcular las décimas de segundo
+            const remainingTotalWorkingMilliseconds = remainingTotalWorkingSeconds * 1000;
 
             // Mostrar el tiempo restante en el HTML
-            displayRemainingTime(remainingTotalWorkingSeconds);
+            displayRemainingTime(remainingTotalWorkingMilliseconds);
         }
 
         /**
          * Formatea y muestra el tiempo restante en los elementos HTML.
-         * @param {number} totalSeconds - El total de segundos laborables.
+         * @param {number} totalMilliseconds - El total de milisegundos laborables.
          */
-        function displayRemainingTime(totalSeconds) {
-            // Convertir el total de segundos en días, horas, minutos y segundos
-            // Aquí, "días" representa bloques de 24 horas de tiempo laborable, no días de calendario.
-            const days = Math.floor(totalSeconds / (60 * 60 * 24));
-            totalSeconds %= (60 * 60 * 24);
+        function displayRemainingTime(totalMilliseconds) {
+            // Calcular horas, minutos, segundos y décimas de segundo
+            const hours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+            totalMilliseconds %= (1000 * 60 * 60);
 
-            const hours = Math.floor(totalSeconds / (60 * 60));
-            totalSeconds %= (60 * 60);
+            const minutes = Math.floor(totalMilliseconds / (1000 * 60));
+            totalMilliseconds %= (1000 * 60);
 
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = Math.floor(totalSeconds % 60);
+            const seconds = Math.floor(totalMilliseconds / 1000);
+            totalMilliseconds %= 1000;
 
-            // Actualizar los elementos HTML con los valores calculados, con formato de dos dígitos
-            daysEl.innerHTML = String(days).padStart(2, '0');
+            const tenths = Math.floor(totalMilliseconds / 100); // Obtener la primera décima
+
+            // Actualizar los elementos HTML con los valores calculados, con formato de dos dígitos para horas, minutos y segundos
             hoursEl.innerHTML = String(hours).padStart(2, '0');
             minutesEl.innerHTML = String(minutes).padStart(2, '0');
             secondsEl.innerHTML = String(seconds).padStart(2, '0');
+            tenthsEl.innerHTML = String(tenths); // Las décimas no necesitan padStart
         }
 
         /**
@@ -225,8 +232,8 @@
         // Event listener para el botón de generar ideas
         generateIdeasBtn.addEventListener("click", generateCelebrationIdeas);
 
-        // Actualizar la cuenta atrás cada segundo
-        const countdownInterval = setInterval(updateCountdown, 1000);
+        // Actualizar la cuenta atrás cada 100 milisegundos para mostrar las décimas de segundo
+        const countdownInterval = setInterval(updateCountdown, 100);
 
         // Llamar a la función una vez al cargar la página para evitar un retraso inicial
         updateCountdown();
