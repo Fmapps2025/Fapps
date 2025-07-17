@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Jubilación</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        /* Custom styling for the main container */
+        .container {
+            background-color: #ffffff; /* White background for the card */
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Softer shadow */
+            padding: 2.5rem; /* More padding */
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        /* Input and button styling */
+        input[type="date"], button {
+            border-radius: 0.75rem; /* Rounded corners for inputs/buttons */
+            padding: 0.75rem 1.25rem; /* Comfortable padding */
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 1rem; /* Space below elements */
+        }
+        input[type="date"] {
+            border: 1px solid #cbd5e1; /* Light gray border */
+            background-color: #f8fafc; /* Very light blue-gray background */
+            color: #334155; /* Darker text color */
+        }
+        button {
+            background-color: #4f46e5; /* Indigo */
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background-color: #4338ca; /* Darker indigo on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+        button:active {
+            transform: translateY(0); /* Return to original position on click */
+        }
+        .result-box {
+            background-color: #e0f2fe; /* Light blue background for result */
+            border: 1px solid #90cdf4; /* Blue border */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            color: #1e40af; /* Darker blue text */
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        .error-message {
+            color: #ef4444; /* Red for error messages */
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Calculadora de Jubilación</h1>
+        <p class="text-gray-600 mb-6">Introduce tu fecha de nacimiento para calcular los días laborables que te faltan para jubilarte (edad de jubilación estimada: 67 años).</p>
+
+        <div class="mb-4">
+            <label for="birthDate" class="block text-gray-700 text-sm font-medium mb-2 text-left">Fecha de Nacimiento:</label>
+            <input type="date" id="birthDate" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block">
+        </div>
+
+        <button onclick="calculateRetirement()">Calcular Días Laborables</button>
+
+        <div id="result" class="result-box hidden">
+            <!-- Resultado se mostrará aquí -->
+        </div>
+        <div id="errorMessage" class="error-message hidden">
+            <!-- Mensajes de error se mostrarán aquí -->
+        </div>
+    </div>
+
+    <script>
+        // Set the default retirement age (in years)
+        const RETIREMENT_AGE = 67;
+
+        /**
+         * Calculates the number of working days until retirement.
+         */
+        function calculateRetirement() {
+            const birthDateInput = document.getElementById('birthDate');
+            const resultDiv = document.getElementById('result');
+            const errorMessageDiv = document.getElementById('errorMessage');
+
+            // Clear previous results and errors
+            resultDiv.classList.add('hidden');
+            errorMessageDiv.classList.add('hidden');
+            errorMessageDiv.textContent = '';
+            resultDiv.textContent = '';
+
+            const birthDateStr = birthDateInput.value;
+
+            // Validate if a date is selected
+            if (!birthDateStr) {
+                errorMessageDiv.textContent = 'Por favor, introduce tu fecha de nacimiento.';
+                errorMessageDiv.classList.remove('hidden');
+                return;
+            }
+
+            const birthDate = new Date(birthDateStr);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalize today's date to start of day
+
+            // Check if the birth date is in the future
+            if (birthDate > today) {
+                errorMessageDiv.textContent = 'La fecha de nacimiento no puede ser en el futuro.';
+                errorMessageDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Calculate retirement date
+            const retirementDate = new Date(birthDate.getFullYear() + RETIREMENT_AGE, birthDate.getMonth(), birthDate.getDate());
+            retirementDate.setHours(0, 0, 0, 0); // Normalize retirement date to start of day
+
+            // If the retirement date is in the past, the user is already retired
+            if (retirementDate < today) {
+                resultDiv.textContent = '¡Felicidades! Ya deberías estar jubilado/a.';
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            let workingDays = 0;
+            let currentDate = new Date(today); // Start counting from today
+
+            // Loop through each day from today until the retirement date
+            while (currentDate <= retirementDate) {
+                const dayOfWeek = currentDate.getDay(); // 0 for Sunday, 1 for Monday, ..., 6 for Saturday
+
+                // Check if it's a weekday (Monday to Friday)
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    workingDays++;
+                }
+
+                // Move to the next day
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Display the result
+            resultDiv.textContent = `Te faltan ${workingDays} días laborables para jubilarte.`;
+            resultDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
