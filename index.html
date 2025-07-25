@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cuenta Atrás de Horas Laborables</title>
+    <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Estilos personalizados para la fuente Inter */
@@ -13,7 +14,7 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-green-600 to-emerald-800 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gradient-to-br from-purple-600 to-indigo-800 min-h-screen flex items-center justify-center p-4">
     <div class="bg-white bg-opacity-90 p-8 rounded-3xl shadow-2xl text-center max-w-xl w-full transform transition-all duration-500 hover:scale-105">
         <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
             Cuenta Atrás de Vacaciones
@@ -22,32 +23,39 @@
             Horas laborables restantes hasta el 25 de julio de 2025 a las 15:15
         </p>
         <div id="countdown" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            <div class="bg-green-700 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
+            <!-- Se muestra el total de horas restantes -->
+            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
                 <span id="hours" class="text-4xl md:text-5xl font-bold">00</span>
                 <span class="text-sm md:text-base mt-1">Horas</span>
             </div>
-            <div class="bg-green-700 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
+            <!-- Se muestran los minutos restantes -->
+            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
                 <span id="minutes" class="text-4xl md:text-5xl font-bold">00</span>
                 <span class="text-sm md:text-base mt-1">Minutos</span>
             </div>
-            <div class="bg-green-700 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
+            <!-- Se muestran los segundos restantes -->
+            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
                 <span id="seconds" class="text-4xl md:text-5xl font-bold">00</span>
                 <span class="text-sm md:text-base mt-1">Segundos</span>
             </div>
-            <div class="bg-green-700 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
+            <!-- Se muestran las décimas de segundo restantes -->
+            <div class="bg-indigo-500 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-300">
                 <span id="tenths" class="text-4xl md:text-5xl font-bold">0</span>
                 <span class="text-sm md:text-base mt-1">Décimas</span>
             </div>
         </div>
         <div id="message" class="text-2xl font-semibold text-green-600 hidden">
-            </div>
+            ¡Enhorabuena, estás de vacaciones!
+        </div>
 
-        <button id="generateIdeasBtn" class="mt-8 px-6 py-3 bg-teal-500 text-white font-bold rounded-xl shadow-lg hover:bg-teal-600 transition-colors duration-300 transform hover:scale-105 hidden">
+        <!-- Sección para la función de Gemini API -->
+        <button id="generateIdeasBtn" class="mt-8 px-6 py-3 bg-pink-500 text-white font-bold rounded-xl shadow-lg hover:bg-pink-600 transition-colors duration-300 transform hover:scale-105 hidden">
             ✨ Generar Ideas de Celebración ✨
         </button>
         <div id="ideasContainer" class="mt-6 text-left hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Ideas para celebrar:</h2>
             <div id="ideasOutput" class="bg-gray-100 p-4 rounded-lg text-gray-700">
+                <!-- Las ideas generadas por la IA se mostrarán aquí -->
                 <p id="loadingIndicator" class="text-center text-gray-500 hidden">Cargando ideas...</p>
             </div>
         </div>
@@ -55,175 +63,180 @@
 
     <script>
         // La fecha y hora de destino para la cuenta atrás (25 de julio de 2025, 15:15:00)
-        const targetDate = new Date("Jul 25, 2025 15:15:00").getTime(); [cite: 11]
+        const targetDate = new Date("Jul 25, 2025 15:15:00").getTime();
+
         // Obtener los elementos HTML donde se mostrará la cuenta atrás
-        const hoursEl = document.getElementById("hours"); [cite: 12]
-        const minutesEl = document.getElementById("minutes"); [cite: 13]
-        const secondsEl = document.getElementById("seconds"); [cite: 13]
-        const tenthsEl = document.getElementById("tenths"); [cite: 13]
-        // Nuevo elemento para décimas de segundo
-        const messageEl = document.getElementById("message"); [cite: 14]
-        const countdownEl = document.getElementById("countdown"); [cite: 15]
-        const generateIdeasBtn = document.getElementById("generateIdeasBtn"); [cite: 15]
-        const ideasContainer = document.getElementById("ideasContainer"); [cite: 15]
-        const ideasOutput = document.getElementById("ideasOutput"); [cite: 15]
-        const loadingIndicator = document.getElementById("loadingIndicator"); [cite: 15]
+        const hoursEl = document.getElementById("hours");
+        const minutesEl = document.getElementById("minutes");
+        const secondsEl = document.getElementById("seconds");
+        const tenthsEl = document.getElementById("tenths"); // Nuevo elemento para décimas de segundo
+        const messageEl = document.getElementById("message");
+        const countdownEl = document.getElementById("countdown");
+        const generateIdeasBtn = document.getElementById("generateIdeasBtn");
+        const ideasContainer = document.getElementById("ideasContainer");
+        const ideasOutput = document.getElementById("ideasOutput");
+        const loadingIndicator = document.getElementById("loadingIndicator");
+
         // Define los turnos de trabajo para cada día de la semana
         // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
         const workingShifts = {
-            1: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Lunes [cite: 16]
-            2: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Martes [cite: 16]
-            3: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Miércoles 
-            4: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Jueves 
-            5: [{ start: '06:45', end: '15:15' }] // Viernes 
+            1: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Lunes
+            2: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Martes
+            3: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Miércoles
+            4: [{ start: '07:30', end: '13:20' }, { start: '15:20', end: '18:00' }], // Jueves
+            5: [{ start: '06:45', end: '15:15' }] // Viernes
             // Sábados y Domingos no están definidos, por lo tanto, no se consideran días laborables
         };
+
         /**
          * Calcula el total de segundos laborables entre dos fechas y horas.
-         * @param {Date} startDateTime - La fecha y hora de inicio. [cite: 19]
-         * @param {Date} endDateTime - La fecha y hora de fin. [cite: 20]
-         * @returns {number} El total de segundos laborables. [cite: 21]
+         * @param {Date} startDateTime - La fecha y hora de inicio.
+         * @param {Date} endDateTime - La fecha y hora de fin.
+         * @returns {number} El total de segundos laborables.
          */
         function calculateTotalWorkingSeconds(startDateTime, endDateTime) {
-            let totalSeconds = 0; [cite: 21]
+            let totalSeconds = 0;
+
             // Clonar las fechas para evitar modificar las originales
-            let currentDay = new Date(startDateTime); [cite: 22]
+            let currentDay = new Date(startDateTime);
             // Normalizar a la medianoche del día actual para la iteración
-            currentDay.setHours(0, 0, 0, 0); [cite: 23]
-            const endTarget = new Date(endDateTime); // La hora de finalización exacta [cite: 24]
+            currentDay.setHours(0, 0, 0, 0);
+
+            const endTarget = new Date(endDateTime); // La hora de finalización exacta
 
             // Iterar día a día desde la fecha de inicio hasta la fecha de fin
             while (currentDay.getTime() <= endTarget.getTime()) {
-                const dayOfWeek = currentDay.getDay(); [cite: 24]
+                const dayOfWeek = currentDay.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
 
                 // Si es un día laborable según los turnos definidos
-                if (workingShifts[dayOfWeek]) { [cite: 25]
+                if (workingShifts[dayOfWeek]) {
                     workingShifts[dayOfWeek].forEach(shift => {
                         // Crear objetos Date para el inicio y fin del turno en el día actual
-                        let shiftStartToday = new Date(currentDay); [cite: 26]
-                        shiftStartToday.setHours(parseInt(shift.start.split(':')[0]), parseInt(shift.start.split(':')[1]), 0, 0); [cite: 26]
+                        let shiftStartToday = new Date(currentDay);
+                        shiftStartToday.setHours(parseInt(shift.start.split(':')[0]), parseInt(shift.start.split(':')[1]), 0, 0);
 
-                        let shiftEndToday = new Date(currentDay); [cite: 27]
-                        shiftEndToday.setHours(parseInt(shift.end.split(':')[0]), parseInt(shift.end.split(':')[1]), 0, 0); [cite: 27]
+                        let shiftEndToday = new Date(currentDay);
+                        shiftEndToday.setHours(parseInt(shift.end.split(':')[0]), parseInt(shift.end.split(':')[1]), 0, 0);
 
                         // Calcular la intersección entre el rango de tiempo general
                         // (startDateTime, endDateTime) y el turno de trabajo (shiftStartToday, shiftEndToday)
-                        const effectiveStart = Math.max(shiftStartToday.getTime(), startDateTime.getTime()); [cite: 28]
-                        const effectiveEnd = Math.min(shiftEndToday.getTime(), endTarget.getTime()); [cite: 29]
+                        const effectiveStart = Math.max(shiftStartToday.getTime(), startDateTime.getTime());
+                        const effectiveEnd = Math.min(shiftEndToday.getTime(), endTarget.getTime());
 
                         // Si hay una superposición de tiempo, añadir los segundos laborables
                         if (effectiveEnd > effectiveStart) {
-                            totalSeconds += (effectiveEnd - effectiveStart) / 1000; [cite: 30]
+                            totalSeconds += (effectiveEnd - effectiveStart) / 1000;
                         }
                     });
                 }
 
                 // Mover al siguiente día
-                currentDay.setDate(currentDay.getDate() + 1); [cite: 31]
+                currentDay.setDate(currentDay.getDate() + 1);
                 // Asegurarse de que sea el inicio del siguiente día
-                currentDay.setHours(0, 0, 0, 0); [cite: 32]
+                currentDay.setHours(0, 0, 0, 0);
             }
 
             // Asegurarse de que el total de segundos no sea negativo y redondear hacia abajo
-            return Math.max(0, Math.floor(totalSeconds)); [cite: 33]
+            return Math.max(0, Math.floor(totalSeconds));
         }
 
         /**
-         * Actualiza la visualización de la cuenta atrás. [cite: 34]
+         * Actualiza la visualización de la cuenta atrás.
          */
         function updateCountdown() {
-            const now = new Date(); [cite: 35]
+            const now = new Date(); // Obtener la fecha y hora actual
 
             // Si la fecha actual es igual o posterior a la fecha de destino, la cuenta atrás ha terminado
             if (now.getTime() >= targetDate) {
-                displayRemainingTime(0); [cite: 36]
-                clearInterval(countdownInterval); [cite: 37]
-                countdownEl.classList.add("hidden"); [cite: 38]
-                messageEl.classList.remove("hidden"); [cite: 39]
-                messageEl.innerHTML = 'Enhorabuena, disfruta de tus merecidas vacaciones. Cuidado con los excesos. <a href="https://fmapps2025.github.io/Fapps/vacaciones.html" class="text-emerald-400 hover:underline">Click en este enlace para saber cuántas horas de vacaciones te quedan</a>';
-                generateIdeasBtn.classList.remove("hidden"); [cite: 40]
-                return; [cite: 41]
+                displayRemainingTime(0); // Mostrar 0 en todos los campos
+                clearInterval(countdownInterval); // Detener la actualización
+                countdownEl.classList.add("hidden"); // Ocultar la cuenta atrás
+                messageEl.classList.remove("hidden"); // Mostrar el mensaje final
+                generateIdeasBtn.classList.remove("hidden"); // Mostrar el botón de generar ideas
+                return; // Salir de la función
             }
 
             // Calcular el total de segundos laborables restantes
-            // Aquí, pasamos `now` directamente a calculateTotalWorkingSeconds
-            // para que calcule desde el momento actual.
-            const remainingTotalWorkingSeconds = calculateTotalWorkingSeconds(now, new Date(targetDate)); [cite: 42]
-            const remainingTotalWorkingMilliseconds = remainingTotalWorkingSeconds * 1000; [cite: 43] // Convertir a milisegundos
+            const remainingTotalWorkingSeconds = calculateTotalWorkingSeconds(now, new Date(targetDate));
+            // Convertir a milisegundos para calcular las décimas de segundo
+            const remainingTotalWorkingMilliseconds = remainingTotalWorkingSeconds * 1000;
 
-            displayRemainingTime(remainingTotalWorkingMilliseconds); [cite: 44]
+            // Mostrar el tiempo restante en el HTML
+            displayRemainingTime(remainingTotalWorkingMilliseconds);
         }
 
         /**
-         * Formatea y muestra el tiempo restante en los elementos HTML. [cite: 45]
-         * @param {number} totalMilliseconds - El total de milisegundos laborables. [cite: 46]
+         * Formatea y muestra el tiempo restante en los elementos HTML.
+         * @param {number} totalMilliseconds - El total de milisegundos laborables.
          */
         function displayRemainingTime(totalMilliseconds) {
             // Calcular horas, minutos, segundos y décimas de segundo
-            let remainingMs = totalMilliseconds; // Usar una variable temporal para las operaciones de módulo
+            const hours = Math.floor(totalMilliseconds / (1000 * 60 * 60));
+            totalMilliseconds %= (1000 * 60 * 60);
 
-            const hours = Math.floor(remainingMs / (1000 * 60 * 60)); [cite: 47]
-            remainingMs %= (1000 * 60 * 60);
+            const minutes = Math.floor(totalMilliseconds / (1000 * 60));
+            totalMilliseconds %= (1000 * 60);
 
-            const minutes = Math.floor(remainingMs / (1000 * 60)); [cite: 48]
-            remainingMs %= (1000 * 60);
+            const seconds = Math.floor(totalMilliseconds / 1000);
+            totalMilliseconds %= 1000;
 
-            const seconds = Math.floor(remainingMs / 1000); [cite: 49]
-            remainingMs %= 1000;
+            const tenths = Math.floor(totalMilliseconds / 100); // Obtener la primera décima
 
-            const tenths = Math.floor(remainingMs / 100); [cite: 49]
-
-            // Actualizar los elementos HTML con los valores calculados
-            hoursEl.innerHTML = String(hours).padStart(2, '0'); [cite: 50]
-            minutesEl.innerHTML = String(minutes).padStart(2, '0'); [cite: 51]
-            secondsEl.innerHTML = String(seconds).padStart(2, '0'); [cite: 51]
-            tenthsEl.innerHTML = String(tenths); [cite: 51]
+            // Actualizar los elementos HTML con los valores calculados, con formato de dos dígitos para horas, minutos y segundos
+            hoursEl.innerHTML = String(hours).padStart(2, '0');
+            minutesEl.innerHTML = String(minutes).padStart(2, '0');
+            secondsEl.innerHTML = String(seconds).padStart(2, '0');
+            tenthsEl.innerHTML = String(tenths); // Las décimas no necesitan padStart
         }
 
         /**
-         * Llama a la API de Gemini para generar ideas de celebración. [cite: 52]
+         * Llama a la API de Gemini para generar ideas de celebración.
          */
         async function generateCelebrationIdeas() {
-            loadingIndicator.classList.remove("hidden"); [cite: 53]
-            ideasOutput.innerHTML = ''; [cite: 54]
-            ideasContainer.classList.remove("hidden"); [cite: 55]
+            loadingIndicator.classList.remove("hidden"); // Mostrar indicador de carga
+            ideasOutput.innerHTML = ''; // Limpiar ideas anteriores
+            ideasContainer.classList.remove("hidden"); // Asegurarse de que el contenedor de ideas sea visible
 
-            const prompt = "Genera 3 ideas creativas y divertidas para celebrar unas vacaciones que acaban de comenzar. Las ideas deben ser concisas y entusiastas, presentadas como una lista numerada."; [cite: 56]
-            let chatHistory = []; [cite: 57]
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] }); [cite: 57]
+            const prompt = "Genera 3 ideas creativas y divertidas para celebrar unas vacaciones que acaban de comenzar. Las ideas deben ser concisas y entusiastas, presentadas como una lista numerada.";
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
 
-            const payload = { contents: chatHistory }; [cite: 57]
-            const apiKey = ""; // La API key será proporcionada por el entorno de Canvas [cite: 58]
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`; [cite: 58]
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // La API key será proporcionada por el entorno de Canvas
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }); [cite: 59, 60]
-                const result = await response.json(); [cite: 60]
+                });
+                const result = await response.json();
+
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text; [cite: 61]
-                    ideasOutput.innerHTML = text.replace(/\n/g, '<br>'); [cite: 62]
+                    const text = result.candidates[0].content.parts[0].text;
+                    ideasOutput.innerHTML = text.replace(/\n/g, '<br>'); // Mostrar el texto con saltos de línea
                 } else {
-                    ideasOutput.innerHTML = "No se pudieron generar ideas. Inténtalo de nuevo."; [cite: 62]
+                    ideasOutput.innerHTML = "No se pudieron generar ideas. Inténtalo de nuevo.";
                 }
             } catch (error) {
-                console.error("Error al llamar a la API de Gemini:", error); [cite: 63]
-                ideasOutput.innerHTML = "Error al conectar con el servicio de ideas."; [cite: 64]
+                console.error("Error al llamar a la API de Gemini:", error);
+                ideasOutput.innerHTML = "Error al conectar con el servicio de ideas.";
             } finally {
-                loadingIndicator.classList.add("hidden"); [cite: 65]
+                loadingIndicator.classList.add("hidden"); // Ocultar indicador de carga
             }
         }
 
         // Event listener para el botón de generar ideas
-        generateIdeasBtn.addEventListener("click", generateCelebrationIdeas); [cite: 66]
+        generateIdeasBtn.addEventListener("click", generateCelebrationIdeas);
+
         // Actualizar la cuenta atrás cada 100 milisegundos para mostrar las décimas de segundo
-        const countdownInterval = setInterval(updateCountdown, 100); [cite: 67]
+        const countdownInterval = setInterval(updateCountdown, 100);
+
         // Llamar a la función una vez al cargar la página para evitar un retraso inicial
-        updateCountdown(); [cite: 68]
+        updateCountdown();
     </script>
 </body>
 </html>
